@@ -1,0 +1,14 @@
+fastapi~=0.111.0
+uvicorn
+sqlalchemy~=2.0.31
+config
+psycopg2
+alembic~=1.13.1
+pillow~=10.3.0
+celery~=5.4.0
+rabbitmq
+pytesseract~=0.3.10
+pydantic~=2.7.4
+pip~=23.2.1
+tornado~=6.4.1
+Jinja2~=3.1.4
