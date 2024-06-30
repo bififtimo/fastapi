@@ -9,7 +9,6 @@ from uuid import uuid4
 import pytesseract
 from PIL import Image
 from app.database import get_db
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -26,7 +25,6 @@ def hello():
     Пример простого эндпоинта для приветствия.
     """
     return "Hello world!"
-
 
 @app.post("/upload_doc/", response_model=dict)
 async def upload_doc(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -98,7 +96,7 @@ def delete_document(document_id: int = Path(..., title="The ID of the document t
     return {"message": f"Document with id {document_id} has been deleted"}
 
 @app.post("/analyse_doc/")
-async def analyse_doc(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def analyse_doc(id: int, db: Session = Depends(get_db)):
     """
     Анализирует документ по его ID.
 
@@ -115,25 +113,22 @@ async def analyse_doc(id: int, background_tasks: BackgroundTasks, db: Session = 
         raise HTTPException(status_code=404, detail="Document not found")
 
     # Запускаем задачу на анализ документа в фоновом режиме
-    background_tasks.add_task(process_document, document.id, document.path, db)
-
-    return {"message": "Document analysis started", "document_id": id}
-
-def process_document(document_id: int, document_path: str, db: Session):
     """
     Обработка документа: извлечение текста и сохранение его в базу данных.
     """
-    text_result = image_to_text(document_path)
+    text_result = image_to_text(document.path)
     if text_result == 1:
         logging.error("Failed to process the document")
         return
 
-    document_text = Documents_text(id_doc=document_id, text=text_result)
+    document_text = Documents_text(id_doc=document.id, text=text_result)
     db.add(document_text)
     db.commit()
     db.refresh(document_text)
 
     return document_text
+
+    return {"message": "Document analysis started", "document_id": id}
 
 @celery.task
 def image_to_text(path: str):
